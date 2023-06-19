@@ -16,7 +16,7 @@ mod escrow {
      auditor: AccountId,
      value: Balance,
      aribterprovider: AccountId,
-     notbefore: u64,
+     deadline: u64,
      inheritedfrom: u32,
      creationtime: u64
     }
@@ -28,7 +28,7 @@ mod escrow {
 )]
     // #[ink::storage_item]
     pub struct IncreaseRequest {
-        auditid: u32,
+        haircut_percentage: Balance,
         newdeadline: u64
     }
     // patron: AccountId,
@@ -49,6 +49,7 @@ mod escrow {
         #[ink(constructor)]
         pub fn new() -> Self {
             let current_audit_id = u32::default();
+            // let current_request_id = u32::default();
             let audit_id_to_payment_info = Mapping::default();
             let audit_id_to_time_increase_request = Mapping::default();
             Self {  current_audit_id, audit_id_to_payment_info, audit_id_to_time_increase_request}
@@ -56,8 +57,6 @@ mod escrow {
 
         #[ink(message)]
         pub fn get_current_audit_id(&self) -> u32{
-            // let caller = self.env().caller();
-            // self.redeemableAmount
             self.current_audit_id
         }
 
@@ -72,9 +71,7 @@ mod escrow {
         }
 
         #[ink(message)]
-        pub fn create_new_payment(&mut self, _value:Balance, _auditor:AccountId, _arbiter_provider: AccountId, _notbefore: u64 ) -> bool {
-            // let _patron = self.env().caller();
-            //won't need it since we're already passing the struct, and it contains the patron's account_id
+        pub fn create_new_payment(&mut self, _value:Balance, _auditor:AccountId, _arbiter_provider: AccountId, _deadline: u64 ) -> bool {
             let _now =  self.env().block_timestamp();
             let x = PaymentInfo{
                 value: _value,
@@ -82,7 +79,7 @@ mod escrow {
                 auditor: _auditor,
                 aribterprovider: _arbiter_provider,
                 patron: self.env().caller(),
-                notbefore: _notbefore,
+                deadline: _deadline,
                 inheritedfrom: 0
 
             };
@@ -92,6 +89,7 @@ mod escrow {
             }
 
             self.audit_id_to_payment_info.insert(&self.current_audit_id, &x);
+            self.current_audit_id = self.current_audit_id + 1;
             true
         }
 
@@ -106,10 +104,10 @@ mod escrow {
         }
 
         #[ink(message)]
-        pub fn request_additional_time(&mut self, id: u32, _time: u64) -> bool {
+        pub fn request_additional_time(&mut self, id: u32, _time: u64, _haircut_percentage: Balance) -> bool {
             if self.get_payment_info(&id).unwrap().auditor == self.env().caller() {
                 let x = IncreaseRequest{
-                    auditid : id,
+                    haircut_percentage : _haircut_percentage,
                     newdeadline: _time
                 };
                 self.audit_id_to_time_increase_request.insert(id, &x);
@@ -119,6 +117,26 @@ mod escrow {
         }
 
         #[ink(message)]
-        pub fn approve_additional_time(&mut self, )
+        pub fn approve_additional_time(&mut self, id:u32) -> bool {
+            if self.get_payment_info(&id).unwrap().patron == self.env().caller() {
+                let haircut = self.query_timeincreaserequest(id).unwrap().haircut_percentage;
+                if haircut<100 {
+                    let mut updated_payment_info = self.get_payment_info(&id).unwrap();
+                let new_value = updated_payment_info.value * (100-haircut)/100;
+                let new_deadline = self.query_timeincreaserequest(id).unwrap().newdeadline;
+                updated_payment_info.deadline = new_deadline;
+                updated_payment_info.value = new_value;
+                self.audit_id_to_payment_info.insert(id, &updated_payment_info);
+                return true;
+                }
+                return false;
+            }
+            false
+        }
+
+        #[ink(message)]
+        pub fn withdraw(&mut self, id:u32) -> bool {
+            
+        }
     }
 }
