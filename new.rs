@@ -36,6 +36,30 @@ mod escrow {
     // patron: AccountId,
     //removed unnecessary AccountId param from IncreaseRequest, as we only have to verify the auditor for request.
 
+    #[ink(event)]
+    pub struct AuditIdAssigned {
+        id: Option<u32>,
+        payment_info: Option<PaymentInfo>,
+    }
+    #[ink(event)]
+    pub struct AuditInfoUpdated {
+        id: Option<u32>,
+        payment_info: Option<PaymentInfo>,
+        updated_by: Option<AccountId>,
+    }
+    #[ink(event)]
+    pub struct DeadlineExtendRequest {
+        id: u32,
+        newtime: u64,
+        haircut: Balance,
+    }
+
+    #[ink(event)]
+    pub struct AuditSubmitted {
+        id: u32,
+        ipfs_hash: String,
+    }
+
     #[ink(storage)]
     #[derive(Default)]
     pub struct Escrow {
@@ -103,6 +127,10 @@ mod escrow {
 
             self.audit_id_to_payment_info
                 .insert(&self.current_audit_id, &x);
+            self.env().emit_event(AuditIdAssigned {
+                id: Some(self.current_audit_id),
+                payment_info: Some(x),
+            });
             self.current_audit_id = self.current_audit_id + 1;
             true
         }
@@ -120,16 +148,21 @@ mod escrow {
         #[ink(message)]
         pub fn request_additional_time(
             &mut self,
-            id: u32,
+            _id: u32,
             _time: u64,
             _haircut_percentage: Balance,
         ) -> bool {
-            if self.get_payment_info(&id).unwrap().auditor == self.env().caller() {
+            if self.get_payment_info(&_id).unwrap().auditor == self.env().caller() {
                 let x = IncreaseRequest {
                     haircut_percentage: _haircut_percentage,
                     newdeadline: _time,
                 };
-                self.audit_id_to_time_increase_request.insert(id, &x);
+                self.audit_id_to_time_increase_request.insert(_id, &x);
+                self.env().emit_event(DeadlineExtendRequest {
+                    id: _id,
+                    newtime: _time,
+                    haircut: _haircut_percentage,
+                });
                 return true;
             }
             false
@@ -147,6 +180,11 @@ mod escrow {
                     //if *= doesn't work, use "self.get_payment_info(&id).unwrap().value *"
                     self.audit_id_to_payment_info.get(id).unwrap().value *= (100 - haircut) / 100;
                     self.audit_id_to_payment_info.get(id).unwrap().deadline = new_deadline;
+                    self.env().emit_event(AuditInfoUpdated {
+                        id: Some(id),
+                        payment_info: Some(self.audit_id_to_payment_info.get(id).unwrap()),
+                        updated_by: Some(self.get_payment_info(&id).unwrap().patron),
+                    });
                     return true;
                 }
                 return false;
@@ -155,9 +193,13 @@ mod escrow {
         }
 
         #[ink(message)]
-        pub fn markCompleted(&mut self, id: u32, _ipfs_hash: String) -> bool {
+        pub fn mark_completed(&mut self, id: u32, _ipfs_hash: String) -> bool {
             if self.get_payment_info(&id).unwrap().auditor == self.env().caller() {
                 self.audit_id_to_ipfs_hash.insert(id, &_ipfs_hash);
+                self.env().emit_event(AuditSubmitted {
+                    id: id,
+                    ipfs_hash: _ipfs_hash,
+                });
                 return true;
             }
             false
@@ -173,7 +215,7 @@ mod escrow {
                 .unwrap()
                 .aribterprovider;
             if caller == audit_patron || caller == audit_arbiterprovider {
-                if answer {
+                if answer && !self.audit_id_to_payment_info.get(_id).unwrap().completed {
                     if caller == audit_patron {
                         self.audit_id_to_payment_info.get(_id).unwrap().completed = answer;
                     // to_do
@@ -197,11 +239,16 @@ mod escrow {
         }
 
         #[ink(message)]
-        pub fn arbiters_extenddeadline(&self, _id: u32, newdeadline: u64, haircut: Balance) -> bool {
+        pub fn arbiters_extend_deadline(&self, _id: u32, newdeadline: u64, haircut: Balance) -> bool {
             //checking for the haircut to be lesser than 10% and new deadline to be at least more than 1 day.
             if haircut < 10 && newdeadline > self.env().block_timestamp() + 86400 {
                 self.audit_id_to_payment_info.get(_id).unwrap().deadline = newdeadline;
                 self.audit_id_to_payment_info.get(_id).unwrap().value *= (100-haircut)/100;
+                self.env().emit_event(AuditInfoUpdated {
+                    id: Some(_id),
+                    payment_info: Some(self.audit_id_to_payment_info.get(_id).unwrap()),
+                    updated_by: Some(self.get_payment_info(&_id).unwrap().patron),
+                });
                 return true;
             }
             false
