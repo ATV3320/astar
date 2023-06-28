@@ -2,6 +2,8 @@
 
 #[ink::contract]
 mod contractCalling {
+    // use ink::primitives::AccountId;
+
 
     #[ink(storage)]
     pub struct ContractCalling {
@@ -38,15 +40,27 @@ mod contractCalling {
             self.env().account_id()
         }
         
+        // #[ink(message)]
+        // pub fn call_another_contract(&self, address : AccountId, _to: AccountId, _amount: Balance) -> Balance {
+        //     return ink::env::call::build_call::<Environment>()
+        //     .call(address)                              
+        //     .gas_limit(5000)
+        //     .exec_input(
+        //     ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("transfer"))).push_arg(_to).push_arg(_amount)
+        // )
+        // .returns::<Balance>()
+        // .invoke();
+        // }
+
         #[ink(message)]
-        pub fn call_another_contract(&self, address : AccountId) -> u32 {
+        pub fn call_another_contract(&self, address : AccountId) {
             return ink::env::call::build_call::<Environment>()
             .call(address)                              
             .gas_limit(0)
             .exec_input(
-            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("for_no_reason_number")))
+            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("flip")))
         )
-        .returns::<u32>()
+        .returns::<>()
         .invoke();
         }
     }
