@@ -18,7 +18,6 @@ mod escrow {
         pub value: Balance,
         pub aribterprovider: AccountId,
         pub deadline: u64,
-        pub inheritedfrom: u32,
         pub creationtime: u64,
         pub completed: bool,
     }
@@ -117,7 +116,6 @@ mod escrow {
                 aribterprovider: _arbiter_provider,
                 patron: self.env().caller(),
                 deadline: _deadline,
-                inheritedfrom: 0,
                 completed: false,
             };
             //condition to check that the audit is for more than 0 amount.

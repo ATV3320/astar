@@ -1,0 +1,1 @@
+/data/pINK/SecurityMarketplace/basic-contract-caller/target/ink/release/metadata-gen: /data/pINK/SecurityMarketplace/basic-contract-caller/lib.rs /data/pINK/SecurityMarketplace/basic-contract-caller/other_contract/lib.rs /tmp/cargo-contract_PZuW8s/.ink/metadata_gen/main.rs

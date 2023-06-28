@@ -15,7 +15,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 ink_e2e = "4.0.0"
 
 [lib]
-path = "new.rs"
+path = "parth_gave_june_28.rs"
 
 [features]
 default = ["std"]
