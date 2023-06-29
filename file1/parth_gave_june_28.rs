@@ -52,7 +52,7 @@ mod contractCalling {
         // }
 
         #[ink(message)]
-        pub fn call_another_contract(&mut self, address : AccountId) {
+        pub fn call_another_contract(&self, address : AccountId) {
             return ink::env::call::build_call::<Environment>()
             .call(address)
             .gas_limit(0)
@@ -64,9 +64,9 @@ mod contractCalling {
         }
 
         #[ink(message)]
-        pub fn call_flipper(&mut self, target_contract: AccountId) {
+        pub fn call_flipper(&self, target_contract: &mut AccountId) {
             ink::env::call::build_call::<Environment>()
-                .call(target_contract)
+                .call(*target_contract)
                 .gas_limit(0)
                 .transferred_value(10)
                 .exec_input(
