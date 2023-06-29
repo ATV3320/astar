@@ -4,7 +4,6 @@
 mod contractCalling {
     // use ink::primitives::AccountId;
 
-
     #[ink(storage)]
     pub struct ContractCalling {
         value: bool,
@@ -39,11 +38,11 @@ mod contractCalling {
         pub fn get_accountID(&self) -> AccountId {
             self.env().account_id()
         }
-        
+
         // #[ink(message)]
         // pub fn call_another_contract(&self, address : AccountId, _to: AccountId, _amount: Balance) -> Balance {
         //     return ink::env::call::build_call::<Environment>()
-        //     .call(address)                              
+        //     .call(address)
         //     .gas_limit(5000)
         //     .exec_input(
         //     ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("transfer"))).push_arg(_to).push_arg(_amount)
@@ -55,13 +54,29 @@ mod contractCalling {
         #[ink(message)]
         pub fn call_another_contract(&self, address : AccountId) {
             return ink::env::call::build_call::<Environment>()
-            .call(address)                              
+            .call(address)
             .gas_limit(0)
             .exec_input(
             ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("flip")))
         )
-        .returns::<>()
+        .returns::<()>()
         .invoke();
+        }
+
+        #[ink(message)]
+        pub fn call_flipper(&self, target_contract: &mut AccountId) {
+            ink::env::call::build_call::<Environment>()
+                .call(*target_contract)
+                .gas_limit(0)
+                .transferred_value(10)
+                .exec_input(
+                    ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(ink::selector_bytes!("flip")))
+                        // .push_arg(42u8)
+                        // .push_arg(true)
+                        // .push_arg(&[0x10u8; 32]),
+                )
+                .returns::<()>()
+                .invoke();
         }
     }
 }
