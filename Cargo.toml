@@ -1,5 +1,5 @@
 [package]
-name = "SecurityMarketplace"
+name = "security_marketplace"
 version = "0.1.0"
 authors = ["[Parth] <[your_email]>"]
 edition = "2021"
@@ -15,7 +15,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 ink_e2e = "4.0.0"
 
 [lib]
-path = "parth_gave_june_28.rs"
+path = "escrow.rs"
 
 [features]
 default = ["std"]
