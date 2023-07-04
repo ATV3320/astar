@@ -41,7 +41,7 @@ mod escrow {
         pub patron: AccountId,
         pub auditor: AccountId,
         pub value: Balance,
-        pub aribterprovider: AccountId,
+        pub arbiterprovider: AccountId,
         pub deadline: u64,
         pub starttime: u64,
         pub currentstatus: AuditStatus,
@@ -82,6 +82,23 @@ mod escrow {
     pub struct AuditSubmitted {
         id: u32,
         ipfs_hash: String,
+    }
+
+    #[ink(event)]
+    pub struct TokenIncoming {
+        id: u32,
+    }
+
+    #[ink(event)]
+    pub struct TokenOutgoing {
+        id: u32,
+        receiver: AccountId,
+        amount: Balance,
+    }
+
+    #[ink(event)]
+    pub struct AuditIdRetrieved {
+        id: u32,
     }
 
     // pub enum Error1 {
@@ -163,7 +180,7 @@ mod escrow {
                 value: _value,
                 starttime: _now,
                 auditor: self.env().caller(),
-                aribterprovider: _arbiter_provider,
+                arbiterprovider: _arbiter_provider,
                 patron: self.env().caller(),
                 deadline: _deadline,
                 currentstatus: AuditStatus::AuditCreated,
@@ -190,7 +207,9 @@ mod escrow {
             {
                 return false;
             }
-
+            self.env().emit_event(TokenIncoming {
+                id: self.current_audit_id,
+            });
             self.audit_id_to_payment_info
                 .insert(&self.current_audit_id, &x);
             self.env().emit_event(AuditIdAssigned {
@@ -263,6 +282,7 @@ mod escrow {
                     let new_deadline = self.query_timeincreaserequest(id).unwrap().newdeadline;
 
                     let mut payment_info = self.audit_id_to_payment_info.get(id).unwrap();
+                    let value0 = payment_info.value * haircut /100;
                     if !ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -272,13 +292,18 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.patron)
-                            .push_arg(payment_info.value * haircut / 100), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(value0), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<bool>()
                         .invoke()
                     {
                         return false;
                     }
+                    self.env().emit_event(TokenOutgoing {
+                        id: id,
+                        receiver: payment_info.patron,
+                        amount: value0,
+                    });
                     // Update the value in storage
                     payment_info.value = payment_info.value * (100 - haircut) / 100;
                     // Update the deadline in storage
@@ -353,6 +378,11 @@ mod escrow {
                     {
                         return false;
                     }
+                    self.env().emit_event(TokenOutgoing {
+                        id: id,
+                        receiver: payment_info.auditor,
+                        amount: payment_info.value * 98 / 100,
+                    });
                     ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -361,11 +391,16 @@ mod escrow {
                             ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
                                 ink::selector_bytes!("transfer"),
                             ))
-                            .push_arg(payment_info.aribterprovider)
+                            .push_arg(payment_info.arbiterprovider)
                             .push_arg(payment_info.value * 2 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<bool>()
                         .invoke();
+                    self.env().emit_event(TokenOutgoing {
+                        id: id,
+                        receiver: payment_info.arbiterprovider,
+                        amount: payment_info.value * 2 / 100,
+                    });
                     payment_info.currentstatus = AuditStatus::AuditCompleted;
                     self.audit_id_to_payment_info.insert(id, &payment_info);
                     return true;
@@ -377,7 +412,7 @@ mod escrow {
                 }
             }
             //C2
-            else if self.env().caller() == payment_info.aribterprovider
+            else if self.env().caller() == payment_info.arbiterprovider
                 && matches!(
                     payment_info.currentstatus,
                     AuditStatus::AuditAwaitingValidation
@@ -398,6 +433,11 @@ mod escrow {
                         .returns::<bool>()
                         .invoke()
                 {
+                    self.env().emit_event(TokenOutgoing {
+                        id: id,
+                        receiver: payment_info.auditor,
+                        amount: payment_info.value * 95 / 100,
+                    });
                     ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -406,11 +446,16 @@ mod escrow {
                             ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
                                 ink::selector_bytes!("transfer"),
                             ))
-                            .push_arg(payment_info.auditor)
+                            .push_arg(payment_info.arbiterprovider)
                             .push_arg(payment_info.value * 5 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<bool>()
                         .invoke();
+                    self.env().emit_event(TokenOutgoing {
+                        id: id,
+                        receiver: payment_info.arbiterprovider,
+                        amount: payment_info.value * 5 / 100,
+                    });
                     payment_info.currentstatus = AuditStatus::AuditCompleted;
                     self.audit_id_to_payment_info.insert(id, &payment_info);
                     return true;
@@ -451,10 +496,15 @@ mod escrow {
                         ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
                             ink::selector_bytes!("transfer"),
                         ))
-                        .push_arg(payment_info.aribterprovider)
+                        .push_arg(payment_info.arbiterprovider)
                         .push_arg(arbitersscut), // .push_arg(&[0x10u8; 32]),
                     )
                     .returns::<bool>();
+                self.env().emit_event(TokenOutgoing {
+                    id: _id,
+                    receiver: payment_info.arbiterprovider,
+                    amount: arbitersscut,
+                });
                 ink::env::call::build_call::<Environment>()
                     .call(self.stablecoin_address)
                     .gas_limit(0)
@@ -467,12 +517,49 @@ mod escrow {
                         .push_arg(payment_info.value * haircut / 100), // .push_arg(&[0x10u8; 32]),
                     )
                     .returns::<bool>();
+                self.env().emit_event(TokenOutgoing {
+                    id: _id,
+                    receiver: payment_info.patron,
+                    amount: payment_info.value * haircut / 100,
+                });
                 self.audit_id_to_payment_info.insert(_id, &payment_info);
                 self.env().emit_event(AuditInfoUpdated {
                     id: Some(_id),
                     payment_info: Some(self.audit_id_to_payment_info.get(_id).unwrap()),
                     updated_by: Some(self.get_payment_info(&_id).unwrap().patron),
                 });
+                return true;
+            }
+            false
+        }
+        pub fn retrieve_audit(&mut self, id: u32) -> bool {
+            let mut payment_info = self.audit_id_to_payment_info.get(id).unwrap();
+            if payment_info.patron == self.env().caller() && (matches!(payment_info.currentstatus, AuditStatus::AuditCreated) || payment_info.deadline <= self.env().block_timestamp()) {
+                payment_info.currentstatus = AuditStatus::AuditExpired;
+                payment_info.value = 0;
+                ink::env::call::build_call::<Environment>()
+                    .call(self.stablecoin_address)
+                    .gas_limit(0)
+                    .transferred_value(0)
+                    .exec_input(
+                        ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                            ink::selector_bytes!("transfer"),
+                        ))
+                        .push_arg(payment_info.patron)
+                        .push_arg(payment_info.value),
+                    )
+                    .returns::<bool>();
+                self.env().emit_event(TokenOutgoing {
+                    id: id,
+                    receiver: payment_info.patron,
+                    amount: payment_info.value,
+                });
+                self.env().emit_event(AuditInfoUpdated {
+                    id: Some(id),
+                    payment_info: Some(self.audit_id_to_payment_info.get(id).unwrap()),
+                    updated_by: Some(self.env().caller()),
+                });
+                self.audit_id_to_payment_info.insert(id, &payment_info);
                 return true;
             }
             false
