@@ -1,1 +1,0 @@
-/data/pINK/SecurityMarketplace/basic-contract-caller/target/ink/wasm32-unknown-unknown/release/basic_contract_caller.wasm: /data/pINK/SecurityMarketplace/basic-contract-caller/lib.rs /data/pINK/SecurityMarketplace/basic-contract-caller/other_contract/lib.rs
