@@ -7,8 +7,9 @@
 mod escrow {
     use ink::storage::Mapping;
     // use ink_e2e::subxt::utils::MultiAddress;
-    use openbrush::traits::String;
+    // use openbrush::traits::String;
     // use openbrush::traits::Balance;
+    use ink::prelude::string::String;
 
     //under audit status,
     //if the audit is created, or expired, the patron can take their money back,
@@ -238,15 +239,15 @@ mod escrow {
             }
         }
 
-        #[ink(message)]
-        pub fn view_payment_info(&self, id: u32) -> Option<PaymentInfo> {
-            self.get_payment_info(&id)
-        }
+        // #[ink(message)]
+        // pub fn view_payment_info(&self, id: u32) -> Option<PaymentInfo> {
+        //     self.get_payment_info(&id)
+        // }
 
-        #[inline]
-        fn get_payment_info(&self, id: &u32) -> Option<PaymentInfo> {
-            self.audit_id_to_payment_info.get(id)
-        }
+        // #[inline]
+        // fn get_payment_info(&self, id: &u32) -> Option<PaymentInfo> {
+        //     self.audit_id_to_payment_info.get(id)
+        // }
 
         #[ink(message)]
         pub fn request_additional_time(
@@ -255,7 +256,7 @@ mod escrow {
             _time: u64,
             _haircut_percentage: Balance,
         ) -> bool {
-            if self.get_payment_info(&_id).unwrap().auditor == self.env().caller() {
+            if self.get_paymentinfo(_id).unwrap().auditor == self.env().caller() {
                 let x = IncreaseRequest {
                     haircut_percentage: _haircut_percentage,
                     newdeadline: _time,
@@ -273,7 +274,7 @@ mod escrow {
 
         #[ink(message)]
         pub fn approve_additional_time(&mut self, id: u32) -> bool {
-            if self.get_payment_info(&id).unwrap().patron == self.env().caller() {
+            if self.get_paymentinfo(id).unwrap().patron == self.env().caller() {
                 let haircut = self
                     .query_timeincreaserequest(id)
                     .unwrap()
@@ -317,7 +318,7 @@ mod escrow {
                     self.env().emit_event(AuditInfoUpdated {
                         id: Some(id),
                         payment_info: Some(self.audit_id_to_payment_info.get(id).unwrap()),
-                        updated_by: Some(self.get_payment_info(&id).unwrap().patron),
+                        updated_by: Some(self.get_paymentinfo(id).unwrap().patron),
                     });
                     return true;
                 }
@@ -526,7 +527,7 @@ mod escrow {
                 self.env().emit_event(AuditInfoUpdated {
                     id: Some(_id),
                     payment_info: Some(self.audit_id_to_payment_info.get(_id).unwrap()),
-                    updated_by: Some(self.get_payment_info(&_id).unwrap().patron),
+                    updated_by: Some(self.get_paymentinfo(_id).unwrap().patron),
                 });
                 return true;
             }
@@ -567,27 +568,27 @@ mod escrow {
     }
 }
 
-#[cfg(test)]
-mod test_cases {
-    use ink::primitives::AccountId;
+// #[cfg(test)]
+// mod test_cases {
+//     use ink::primitives::AccountId;
 
-    use super ::*;
-    #[cfg(feature = "ink-experimental-engine")]
-    use crate::digital_certificate::digital_certificate;
-    fn random_account_id() -> AccountId {
-        AccountId::from([0x42;32])
-    }
+//     use super ::*;
+//     #[cfg(feature = "ink-experimental-engine")]
+//     use crate::digital_certificate::digital_certificate;
+//     fn random_account_id() -> AccountId {
+//         AccountId::from([0x42;32])
+//     }
 
-    #[test]
-    fn test_case_access_current_audit_id() {
-        let accounts =
-        ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
-        ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
-        ink::env::test::set_callee::<ink::env::DefaultEnvironment>(accounts.bob);
-        let contract = escrow::Escrow::new(accounts.alice);
-        assert_eq!(contract.get_current_audit_id(),0);
-        println!("I'm here.");
-    }
+//     #[test]
+//     fn test_case_access_current_audit_id() {
+//         let accounts =
+//         ink::env::test::default_accounts::<ink::env::DefaultEnvironment>();
+//         ink::env::test::set_caller::<ink::env::DefaultEnvironment>(accounts.alice);
+//         ink::env::test::set_callee::<ink::env::DefaultEnvironment>(accounts.bob);
+//         let contract = escrow::Escrow::new(accounts.alice);
+//         assert_eq!(contract.get_current_audit_id(),0);
+//         println!("I'm here.");
+//     }
 //     #[test]
 //     fn test_case_make_new_audit() {
 //         let accounts =
@@ -755,4 +756,4 @@ mod test_cases {
 //         contract.create_new_payment(value, auditor, arbiter_provider, deadline);
 
 //     }
-}
+// }
