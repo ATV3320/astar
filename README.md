@@ -1,5 +1,23 @@
-# astar
-contracts included: 
-1. Escrow contract for astar's security marketplace,
-2. Reward token that has soul-bound feature, so restricted version of psp22,
-3. Arbiter contract, where KYC verified arbiters are validated from.
+# **AuditBazaar**
+
+![](https://github-production-user-asset-6210df.s3.amazonaws.com/106224868/255558416-ca967656-dd48-47ac-8d95-d48699ecdd58.svg)
+
+
+# Cargo Contract Usage : 
+You can always use `cargo contract help` to print information on available
+commands and their usage.
+
+##### `cargo contract build`
+
+Compiles the contract into optimized WebAssembly bytecode, generates metadata for it,
+and bundles both together in a `<name>.contract` file, which you can use for
+deploying the contract on-chain.
+
+##### `cargo contract check`
+
+Checks that the code builds as WebAssembly. This command does not output any `<name>.contract`
+artifact to the `target/` directory.
+
+##### 'cargo test'
+
+Runs the unit test cases for the specified contract.
