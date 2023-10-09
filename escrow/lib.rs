@@ -633,7 +633,7 @@ mod escrow {
                         feature = "std",
                         derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
                     )]
-                    pub struct X {
+                    pub struct VoteInfo {
                         pub audit_id: u32,
                         pub arbiters: Vec<Arbiter>,
                         pub is_active: bool,
@@ -644,7 +644,7 @@ mod escrow {
                     }
 
                     //getting the list of the arbiters... for money distribution.
-                    let vote_info: Option<X> = ink::env::call::build_call::<Environment>()
+                    let vote_info = ink::env::call::build_call::<Environment>()
                         .call(payment_info.arbiterprovider)
                         .gas_limit(0)
                         .transferred_value(0)
@@ -654,7 +654,7 @@ mod escrow {
                             ))
                             .push_arg(reference_id),
                         )
-                        .returns::<Option<X>>()
+                        .returns::<Option<VoteInfo>>()
                         .invoke();
                     let vote_info1 = vote_info.unwrap();
                     //transfer 5% of the arbitersshare to the voting contract's owner, the arbitersprovider.

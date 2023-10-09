@@ -1,0 +1,11 @@
+/data/pINK/SecurityMarketplace/delete_stub/escrow/target/ink/release/deps/ink_metadata-7e1bba144d88e922.rmeta: /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/lib.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/mod.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/validate.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/specs.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/utils.rs
+
+/data/pINK/SecurityMarketplace/delete_stub/escrow/target/ink/release/deps/libink_metadata-7e1bba144d88e922.rlib: /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/lib.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/mod.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/validate.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/specs.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/utils.rs
+
+/data/pINK/SecurityMarketplace/delete_stub/escrow/target/ink/release/deps/ink_metadata-7e1bba144d88e922.d: /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/lib.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/mod.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/validate.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/specs.rs /home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/utils.rs
+
+/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/lib.rs:
+/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/mod.rs:
+/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/layout/validate.rs:
+/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/specs.rs:
+/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/ink_metadata-4.3.0/src/utils.rs:

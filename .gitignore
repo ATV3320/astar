@@ -1,5 +1,10 @@
 # Ignore build artifacts from the local tests sub-crate.
 /target/
+/escrow/target/
+/escrow/escrow_with_tests/target
+/voting/target/
+/voting/voting_with_tests/target/
+/reward_token/target/
 
 # Ignore backup files creates by cargo fmt.
 **/*.rs.bk
