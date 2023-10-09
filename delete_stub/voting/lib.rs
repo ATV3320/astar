@@ -241,8 +241,7 @@ mod voting {
                                                 &x.decided_deadline + self.env().block_timestamp(),
                                             )
                                             .push_arg(&x.decided_haircut)
-                                            .push_arg(self.arbiters_share)
-                                            .push_arg(_vote_id),
+                                            .push_arg(self.arbiters_share),
                                         )
                                         .returns::<Result<()>>()
                                         .try_invoke();
@@ -276,8 +275,7 @@ mod voting {
                                                 ),
                                             )
                                             .push_arg(&x.audit_id)
-                                            .push_arg(true)
-                                            .push_arg(_vote_id),
+                                            .push_arg(true),
                                         )
                                         .returns::<Result<()>>()
                                         .try_invoke();
@@ -324,8 +322,7 @@ mod voting {
                                             &x.decided_deadline + self.env().block_timestamp(),
                                         )
                                         .push_arg(&x.decided_haircut)
-                                        .push_arg(self.arbiters_share)
-                                        .push_arg(_vote_id),
+                                        .push_arg(self.arbiters_share),
                                     )
                                     .returns::<Result<()>>()
                                     .try_invoke();
@@ -371,8 +368,7 @@ mod voting {
                                             &x.decided_deadline + self.env().block_timestamp(),
                                         )
                                         .push_arg(&x.decided_haircut)
-                                        .push_arg(self.arbiters_share)
-                                        .push_arg(_vote_id),
+                                        .push_arg(self.arbiters_share),
                                     )
                                     .returns::<Result<()>>()
                                     .try_invoke();
@@ -408,8 +404,7 @@ mod voting {
                                             )),
                                         )
                                         .push_arg(&x.audit_id)
-                                        .push_arg(false)
-                                        .push_arg(_vote_id),
+                                        .push_arg(false),
                                     )
                                     .returns::<Result<()>>()
                                     .try_invoke();
@@ -490,8 +485,7 @@ mod voting {
                                             )),
                                         )
                                         .push_arg(&x.audit_id)
-                                        .push_arg(false)
-                                        .push_arg(_vote_id),
+                                        .push_arg(false),
                                     )
                                     .returns::<Result<()>>()
                                     .try_invoke();
@@ -591,8 +585,7 @@ mod voting {
                         .push_arg(&x.audit_id)
                         .push_arg(&x.decided_deadline + self.env().block_timestamp())
                         .push_arg(&x.decided_haircut)
-                        .push_arg(self.arbiters_share)
-                        .push_arg(_vote_id),
+                        .push_arg(self.arbiters_share),
                     )
                     .returns::<Result<()>>()
                     .try_invoke();
@@ -619,8 +612,7 @@ mod voting {
                             ink::selector_bytes!("assess_audit"),
                         ))
                         .push_arg(&x.audit_id)
-                        .push_arg(true)
-                        .push_arg(_vote_id),
+                        .push_arg(true),
                     )
                     .returns::<Result<()>>()
                     .try_invoke();
@@ -660,33 +652,26 @@ mod voting {
                 return Err(Error::TransferFailed);
             }
         }
-
+        
         #[ink(message)]
-        pub fn change_haircut_for_discrepancies(
-            &mut self,
-            change_minor: bool,
-            new_haircut: Balance,
-        ) -> Result<()> {
+        pub fn change_haircut_for_discrepancies(&mut self, change_minor: bool, new_haircut: Balance) ->Result<()> {
             if self.env().caller() != self.admin {
                 return Err(Error::UnAuthorisedCall);
             }
-            if new_haircut > 90 {
+            if new_haircut >90 {
                 return Err(Error::ValueTooHigh);
             }
             if change_minor {
                 self.haircut_for_minor_discreapancies = new_haircut;
-            } else {
+            }
+            else {
                 self.haircut_for_moderate_discrepancies = new_haircut;
             }
             return Ok(());
         }
 
         #[ink(message)]
-        pub fn change_time_extension_for_discrepancies(
-            &mut self,
-            change_minor: bool,
-            new_extension: Timestamp,
-        ) -> Result<()> {
+        pub fn change_time_extension_for_discrepancies(&mut self, change_minor: bool, new_extension: Timestamp) ->Result<()> {
             if self.env().caller() != self.admin {
                 return Err(Error::UnAuthorisedCall);
             }
@@ -695,7 +680,8 @@ mod voting {
             }
             if change_minor {
                 self.time_extension_for_minor_discrepancies = new_extension;
-            } else {
+            }
+            else {
                 self.time_extension_for_moderate_discrepancies = new_extension;
             }
             return Ok(());

@@ -482,7 +482,7 @@ mod escrow {
         // if true, transfer happens, if false, function sets the audit status to expired, and returns the tokens to patron.
         //only then will the transfers happen.
         #[ink(message)]
-        pub fn assess_audit(&mut self, _id: u32, answer: bool, reference_id: u32) -> Result<()> {
+        pub fn assess_audit(&mut self, _id: u32, answer: bool) -> Result<()> {
             let mut payment_info = self.audit_id_to_payment_info.get(_id).unwrap();
             //C1
             if self.env().caller() == payment_info.patron
@@ -515,23 +515,9 @@ mod escrow {
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
-                    let _add_entry_in_voting = ink::env::call::build_call::<Environment>()
-                        .call(payment_info.arbiterprovider)
-                        .gas_limit(0)
-                        .transferred_value(0)
-                        .exec_input(
-                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
-                                ink::selector_bytes!("add_to_treasury"),
-                            ))
-                            .push_arg(reference_id)
-                            .push_arg(payment_info.value * 2 / 100),
-                        )
-                        .returns::<Result<()>>()
-                        .try_invoke();
 
                     if matches!(xyz.unwrap().unwrap(), Result::Ok(()))
                         && matches!(zyx.unwrap().unwrap(), Result::Ok(()))
-                    // && matches!(add_entry_in_voting.unwrap().unwrap(), Result::Ok(()))
                     {
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
@@ -592,23 +578,8 @@ mod escrow {
                         .returns::<Result<()>>()
                         .try_invoke();
 
-                    let _add_entry_in_voting = ink::env::call::build_call::<Environment>()
-                        .call(payment_info.arbiterprovider)
-                        .gas_limit(0)
-                        .transferred_value(0)
-                        .exec_input(
-                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
-                                ink::selector_bytes!("add_to_treasury"),
-                            ))
-                            .push_arg(reference_id)
-                            .push_arg(payment_info.value * 5 / 100),
-                        )
-                        .returns::<Result<()>>()
-                        .try_invoke();
-
                     if matches!(xyz.unwrap().unwrap(), Result::Ok(()))
                         && matches!(zyx.unwrap().unwrap(), Result::Ok(()))
-                    // && matches!(add_entry_in_voting.unwrap().unwrap(), Result::Ok(()))
                     {
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
@@ -655,24 +626,8 @@ mod escrow {
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
-
-                    let _add_entry_in_voting = ink::env::call::build_call::<Environment>()
-                        .call(payment_info.arbiterprovider)
-                        .gas_limit(0)
-                        .transferred_value(0)
-                        .exec_input(
-                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
-                                ink::selector_bytes!("add_to_treasury"),
-                            ))
-                            .push_arg(reference_id)
-                            .push_arg(payment_info.value * 5 / 100),
-                        )
-                        .returns::<Result<()>>()
-                        .try_invoke();
-
                     if matches!(xyz.unwrap().unwrap(), Result::Ok(()))
                         && matches!(zyx.unwrap().unwrap(), Result::Ok(()))
-                    // && matches!(add_entry_in_voting.unwrap().unwrap(), Result::Ok(()))
                     {
                         payment_info.currentstatus = AuditStatus::AuditExpired;
 
@@ -717,7 +672,6 @@ mod escrow {
             new_deadline: Timestamp,
             haircut: Balance,
             arbitersshare: Balance,
-            reference_id: u32,
         ) -> Result<()> {
             //checking for the haircut to be lesser than 10% and new deadline to be at least more than 1 day.
             let mut payment_info = self.audit_id_to_payment_info.get(_id).unwrap();
@@ -748,7 +702,7 @@ mod escrow {
                         ))
                         .push_arg(payment_info.arbiterprovider)
                         .push_arg(arbitersscut), // .push_arg(&[0x10u8; 32]),
-                    )
+                  )
                     .returns::<Result<()>>()
                     .try_invoke();
 
@@ -766,23 +720,10 @@ mod escrow {
                     .returns::<Result<()>>()
                     .try_invoke();
 
-                let _add_entry_in_voting = ink::env::call::build_call::<Environment>()
-                    .call(payment_info.arbiterprovider)
-                    .gas_limit(0)
-                    .transferred_value(0)
-                    .exec_input(
-                        ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
-                            ink::selector_bytes!("add_to_treasury"),
-                        ))
-                        .push_arg(reference_id)
-                        .push_arg(arbitersscut),
-                    )
-                    .returns::<Result<()>>()
-                    .try_invoke();
-
+                //matches!(xyz.unwrap().unwrap(), Result::Ok(()))
+                //removed from condition.
                 if matches!(zyx.unwrap().unwrap(), Result::Ok(()))
                     && matches!(xyz.unwrap().unwrap(), Result::Ok(()))
-                // && matches!(add_entry_in_voting.unwrap().unwrap(), Result::Ok(()))
                 {
                     self.env().emit_event(TokenOutgoing {
                         id: _id,
