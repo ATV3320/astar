@@ -516,9 +516,6 @@ mod voting {
 
         #[ink(message)]
         pub fn add_to_treasury(&mut self, _vote_id: u32, _funds: Balance) -> Result<()> {
-            if self.env().caller() != self.escrow_address {
-                return Err(Error::UnAuthorisedCall);
-            }
             let bal = _funds;
             self.vote_id_to_treasury.insert(_vote_id, &bal);
             Ok(())
