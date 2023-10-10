@@ -277,6 +277,19 @@ mod escrow {
                     payment_info.deadline = payment_info.deadline + _now;
                     payment_info.currentstatus = AuditStatus::AuditAssigned;
                     self.audit_id_to_payment_info.insert(_id, &payment_info);
+                    let _modify_registry_in_voting = ink::env::call::build_call::<Environment>()
+                        .call(payment_info.arbiterprovider)
+                        .gas_limit(0)
+                        .transferred_value(0)
+                        .exec_input(
+                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                                ink::selector_bytes!("add_to_treasury"),
+                            ))
+                            .push_arg(0)
+                            .push_arg(_new_value * 5 / 100), // .push_arg(&[0x10u8; 32]),
+                        )
+                        .returns::<Result<()>>()
+                        .try_invoke();
                     self.env().emit_event(AuditIdAssigned {
                         id: Some(_id),
                         payment_info: Some(payment_info),
@@ -489,6 +502,7 @@ mod escrow {
                 && matches!(payment_info.currentstatus, AuditStatus::AuditSubmitted)
             {
                 if answer {
+                    let total_val = payment_info.value;
                     let xyz = ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -498,7 +512,7 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.auditor)
-                            .push_arg(payment_info.value * 98 / 100), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(total_val * 98 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -511,7 +525,20 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.arbiterprovider)
-                            .push_arg(payment_info.value * 2 / 100), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(total_val * 2 / 100), // .push_arg(&[0x10u8; 32]),
+                        )
+                        .returns::<Result<()>>()
+                        .try_invoke();
+                    let _modify_registry_in_voting = ink::env::call::build_call::<Environment>()
+                        .call(payment_info.arbiterprovider)
+                        .gas_limit(0)
+                        .transferred_value(0)
+                        .exec_input(
+                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                                ink::selector_bytes!("add_to_treasury"),
+                            ))
+                            .push_arg(0)
+                            .push_arg(total_val * 2 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -550,6 +577,7 @@ mod escrow {
                 )
             {
                 if answer {
+                    let total_val = payment_info.value;
                     let xyz = ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -559,7 +587,7 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.auditor)
-                            .push_arg(payment_info.value * 95 / 100), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(total_val * 95 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -573,7 +601,20 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.arbiterprovider)
-                            .push_arg(payment_info.value * 5 / 100), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(total_val * 5 / 100), // .push_arg(&[0x10u8; 32]),
+                        )
+                        .returns::<Result<()>>()
+                        .try_invoke();
+                    let _modify_registry_in_voting = ink::env::call::build_call::<Environment>()
+                        .call(payment_info.arbiterprovider)
+                        .gas_limit(0)
+                        .transferred_value(0)
+                        .exec_input(
+                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                                ink::selector_bytes!("add_to_treasury"),
+                            ))
+                            .push_arg(0)
+                            .push_arg(total_val * 5 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -584,13 +625,13 @@ mod escrow {
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
                             receiver: payment_info.auditor,
-                            amount: payment_info.value * 95 / 100,
+                            amount: total_val * 95 / 100,
                         });
 
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
                             receiver: payment_info.arbiterprovider,
-                            amount: payment_info.value * 5 / 100,
+                            amount: total_val * 5 / 100,
                         });
                         payment_info.currentstatus = AuditStatus::AuditCompleted;
                         self.audit_id_to_payment_info.insert(_id, &payment_info);
@@ -600,6 +641,7 @@ mod escrow {
                 }
                 //if arbitersprovider is finally dissatisfied.
                 else {
+                    let total_val = payment_info.value;
                     let xyz = ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
@@ -609,7 +651,7 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.patron)
-                            .push_arg(payment_info.value * 95 / 100),
+                            .push_arg(total_val * 95 / 100),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -622,7 +664,20 @@ mod escrow {
                                 ink::selector_bytes!("transfer"),
                             ))
                             .push_arg(payment_info.arbiterprovider)
-                            .push_arg(payment_info.value * 5 / 100),
+                            .push_arg(total_val * 5 / 100),
+                        )
+                        .returns::<Result<()>>()
+                        .try_invoke();
+                    let _modify_registry_in_voting = ink::env::call::build_call::<Environment>()
+                        .call(payment_info.arbiterprovider)
+                        .gas_limit(0)
+                        .transferred_value(0)
+                        .exec_input(
+                            ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                                ink::selector_bytes!("add_to_treasury"),
+                            ))
+                            .push_arg(0)
+                            .push_arg(total_val * 5 / 100), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -634,12 +689,12 @@ mod escrow {
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
                             receiver: payment_info.patron,
-                            amount: payment_info.value * 95 / 100,
+                            amount: total_val * 95 / 100,
                         });
                         self.env().emit_event(TokenOutgoing {
                             id: _id,
                             receiver: payment_info.arbiterprovider,
-                            amount: payment_info.value * 5 / 100,
+                            amount: total_val * 5 / 100,
                         });
                         self.env().emit_event(AuditInfoUpdated {
                             id: Some(_id),
@@ -702,9 +757,22 @@ mod escrow {
                         ))
                         .push_arg(payment_info.arbiterprovider)
                         .push_arg(arbitersscut), // .push_arg(&[0x10u8; 32]),
-                  )
+                    )
                     .returns::<Result<()>>()
                     .try_invoke();
+                let _modify_registry_in_voting = ink::env::call::build_call::<Environment>()
+                    .call(payment_info.arbiterprovider)
+                    .gas_limit(0)
+                    .transferred_value(0)
+                    .exec_input(
+                        ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                            ink::selector_bytes!("add_to_treasury"),
+                        ))
+                        .push_arg(0)
+                        .push_arg(arbitersscut), // .push_arg(&[0x10u8; 32]),
+                    )
+                    .returns::<Result<()>>()
+                    .invoke();
 
                 let zyx = ink::env::call::build_call::<Environment>()
                     .call(self.stablecoin_address)

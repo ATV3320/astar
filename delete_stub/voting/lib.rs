@@ -2,6 +2,9 @@
 
 #[ink::contract]
 mod voting {
+    use ink::env::call::build_call;
+    use ink::env::call::ExecutionInput;
+    use ink::env::call::Selector;
     use ink::prelude::vec::Vec;
     use ink::storage::Mapping;
 
@@ -77,6 +80,7 @@ mod voting {
         RightsNotActivatedYet,
         TransferFailed,
         TreasuryEmpty,
+        NoOneVoted,
         ValueTooLow,
         ValueTooHigh,
     }
@@ -515,10 +519,12 @@ mod voting {
         }
 
         #[ink(message)]
-        pub fn add_to_treasury(&mut self, _vote_id: u32, _funds: Balance) -> Result<()> {
-            let bal = _funds;
-            self.vote_id_to_treasury.insert(_vote_id, &bal);
-            Ok(())
+        pub fn add_to_treasury(&mut self, _vote_id: u32, funds: Balance) -> Result<()> {
+            if self.env().caller() == self.escrow_address {
+                self.vote_id_to_treasury.insert(_vote_id, &funds);
+                return Ok(());
+            }
+            Err(Error::UnAuthorisedCall)
         }
 
         #[ink(message)]
@@ -532,11 +538,13 @@ mod voting {
             }
             let vote_info = self.vote_id_to_info.get(_vote_id).unwrap();
             let total_voters = vote_info.available_votes;
+            if total_voters == 0 {
+                return Err(Error::NoOneVoted);
+            }
             let per_voter_share = available_balance / (total_voters as Balance);
-            for i in 0..(vote_info.arbiters.len() - 1) {
-                let arbiter_info = vote_info.arbiters.get(i).unwrap();
-                if arbiter_info.has_voted {
-                    let _red = ink::env::call::build_call::<Environment>()
+            for x in vote_info.arbiters {
+                if x.has_voted {
+                    let _xyz = ink::env::call::build_call::<Environment>()
                         .call(self.stablecoin_address)
                         .gas_limit(0)
                         .transferred_value(0)
@@ -544,11 +552,24 @@ mod voting {
                             ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
                                 ink::selector_bytes!("transfer"),
                             ))
-                            .push_arg(arbiter_info.voter_address)
+                            .push_arg(x.voter_address)
                             .push_arg(per_voter_share), // .push_arg(&[0x10u8; 32]),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
+                    // let _red = ink::env::call::build_call::<Environment>()
+                    //     .call(self.stablecoin_address)
+                    //     .gas_limit(0)
+                    //     .transferred_value(0)
+                    //     .exec_input(
+                    //         ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                    //             ink::selector_bytes!("transfer"),
+                    //         ))
+                    //         .push_arg(arbiter_info.voter_address)
+                    //         .push_arg(per_voter_share), // .push_arg(&[0x10u8; 32]),
+                    //     )
+                    //     .returns::<Result<()>>()
+                    //     .invoke();
                 }
             }
             Ok(())
@@ -649,26 +670,33 @@ mod voting {
                 return Err(Error::TransferFailed);
             }
         }
-        
+
         #[ink(message)]
-        pub fn change_haircut_for_discrepancies(&mut self, change_minor: bool, new_haircut: Balance) ->Result<()> {
+        pub fn change_haircut_for_discrepancies(
+            &mut self,
+            change_minor: bool,
+            new_haircut: Balance,
+        ) -> Result<()> {
             if self.env().caller() != self.admin {
                 return Err(Error::UnAuthorisedCall);
             }
-            if new_haircut >90 {
+            if new_haircut > 90 {
                 return Err(Error::ValueTooHigh);
             }
             if change_minor {
                 self.haircut_for_minor_discreapancies = new_haircut;
-            }
-            else {
+            } else {
                 self.haircut_for_moderate_discrepancies = new_haircut;
             }
             return Ok(());
         }
 
         #[ink(message)]
-        pub fn change_time_extension_for_discrepancies(&mut self, change_minor: bool, new_extension: Timestamp) ->Result<()> {
+        pub fn change_time_extension_for_discrepancies(
+            &mut self,
+            change_minor: bool,
+            new_extension: Timestamp,
+        ) -> Result<()> {
             if self.env().caller() != self.admin {
                 return Err(Error::UnAuthorisedCall);
             }
@@ -677,8 +705,7 @@ mod voting {
             }
             if change_minor {
                 self.time_extension_for_minor_discrepancies = new_extension;
-            }
-            else {
+            } else {
                 self.time_extension_for_moderate_discrepancies = new_extension;
             }
             return Ok(());
