@@ -2,9 +2,6 @@
 
 #[ink::contract]
 mod voting {
-    use ink::env::call::build_call;
-    use ink::env::call::ExecutionInput;
-    use ink::env::call::Selector;
     use ink::prelude::vec::Vec;
     use ink::storage::Mapping;
 
@@ -163,6 +160,61 @@ mod voting {
             self.vote_id_to_treasury.get(&_id)
         }
 
+        fn internal_value_calculator(
+            &self,
+            _id: u32,
+            what_percent: Balance,
+            audit_id: u32,
+        ) -> Balance {
+            #[derive(scale::Decode, scale::Encode)]
+            #[cfg_attr(
+                feature = "std",
+                derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
+            )]
+
+            pub enum AuditStatus {
+                AuditCreated,
+                AuditAssigned,
+                AuditSubmitted,
+                AuditAwaitingValidation,
+                AuditCompleted,
+                AuditExpired,
+            }
+
+            #[derive(scale::Decode, scale::Encode)]
+            #[cfg_attr(
+                feature = "std",
+                derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
+            )]
+
+            pub struct PaymentInfo {
+                pub patron: AccountId,
+                pub auditor: AccountId,
+                pub value: Balance,
+                pub arbiterprovider: AccountId,
+                pub deadline: Timestamp,
+                pub starttime: Timestamp,
+                pub currentstatus: AuditStatus,
+            }
+
+            let payment_info = ink::env::call::build_call::<Environment>()
+                .call(self.escrow_address)
+                .gas_limit(0)
+                .transferred_value(0)
+                .exec_input(
+                    ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
+                        ink::selector_bytes!("get_paymentinfo"),
+                    ))
+                    .push_arg(audit_id),
+                )
+                .returns::<Option<PaymentInfo>>()
+                .invoke()
+                .unwrap();
+            let push_value =
+                payment_info.value * what_percent / 100 + self.get_treasury_info(_id).unwrap();
+            return push_value;
+        }
+
         ///create_new_poll can only be called by the admin of this contract, and will be called when patron rejects a submitted report
         /// the function takes the audit id of the audit under dispute and a list of arbiters who are going to vote on this proposal
         #[ink(message)]
@@ -250,6 +302,9 @@ mod voting {
                                         .returns::<Result<()>>()
                                         .try_invoke();
                                     if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                        // let push_value =
+                                        //     self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                        // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                         x.is_active = false;
                                         x.available_votes = x.available_votes + 1;
                                         x.arbiters[index].has_voted = true;
@@ -284,6 +339,9 @@ mod voting {
                                         .returns::<Result<()>>()
                                         .try_invoke();
                                     if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                        // let push_value =
+                                        //     self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                        // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                         x.available_votes = x.available_votes + 1;
                                         x.arbiters[index].has_voted = true;
                                         x.is_active = false;
@@ -331,6 +389,9 @@ mod voting {
                                     .returns::<Result<()>>()
                                     .try_invoke();
                                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                    // let push_value =
+                                    //     self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                     x.available_votes = x.available_votes + 1;
                                     x.arbiters[index].has_voted = true;
                                     x.is_active = false;
@@ -377,6 +438,9 @@ mod voting {
                                     .returns::<Result<()>>()
                                     .try_invoke();
                                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                    // let push_value =
+                                    //     self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                     x.available_votes = x.available_votes + 1;
                                     x.arbiters[index].has_voted = true;
                                     x.is_active = false;
@@ -413,6 +477,9 @@ mod voting {
                                     .returns::<Result<()>>()
                                     .try_invoke();
                                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                    // let push_value =
+                                        // self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                     x.available_votes = x.available_votes + 1;
                                     x.arbiters[index].has_voted = true;
                                     x.is_active = false;
@@ -489,11 +556,14 @@ mod voting {
                                             )),
                                         )
                                         .push_arg(&x.audit_id)
-                                        .push_arg(false),
+                                        .push_arg(false), 
                                     )
                                     .returns::<Result<()>>()
                                     .try_invoke();
                                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                                    // let push_value =
+                                    //     self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                                     x.available_votes = x.available_votes + 1;
                                     x.arbiters[index].has_voted = true;
                                     x.is_active = false;
@@ -520,11 +590,11 @@ mod voting {
 
         #[ink(message)]
         pub fn add_to_treasury(&mut self, _vote_id: u32, funds: Balance) -> Result<()> {
-            if self.env().caller() == self.escrow_address {
-                self.vote_id_to_treasury.insert(_vote_id, &funds);
-                return Ok(());
-            }
-            Err(Error::UnAuthorisedCall)
+            // if self.env().caller() == self.escrow_address {
+            self.vote_id_to_treasury.insert(_vote_id, &funds);
+            return Ok(());
+            // }
+            // Err(Error::UnAuthorisedCall)
         }
 
         #[ink(message)]
@@ -552,8 +622,8 @@ mod voting {
                             ink::env::call::ExecutionInput::new(ink::env::call::Selector::new(
                                 ink::selector_bytes!("transfer"),
                             ))
-                            .push_arg(x.voter_address)
-                            .push_arg(per_voter_share), // .push_arg(&[0x10u8; 32]),
+                            .push_arg(&x.voter_address)
+                            .push_arg(per_voter_share),
                         )
                         .returns::<Result<()>>()
                         .try_invoke();
@@ -566,7 +636,7 @@ mod voting {
                     //             ink::selector_bytes!("transfer"),
                     //         ))
                     //         .push_arg(arbiter_info.voter_address)
-                    //         .push_arg(per_voter_share), // .push_arg(&[0x10u8; 32]),
+                    //         .push_arg(per_voter_share), 
                     //     )
                     //     .returns::<Result<()>>()
                     //     .invoke();
@@ -608,6 +678,9 @@ mod voting {
                     .returns::<Result<()>>()
                     .try_invoke();
                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                    //middleout changes
+                    // let push_value = self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                     x.is_active = false;
                     x.decided_deadline = (x.decided_deadline) / (x.available_votes as Timestamp);
                     x.decided_haircut = (x.decided_haircut) / (x.available_votes as Balance);
@@ -635,6 +708,8 @@ mod voting {
                     .returns::<Result<()>>()
                     .try_invoke();
                 if matches!(result_call.unwrap().unwrap(), Result::Ok(())) {
+                    // let push_value = self.internal_value_calculator(_vote_id, 5, x.audit_id);
+                    // self.vote_id_to_treasury.insert(_vote_id, &push_value);
                     x.is_active = false;
                     self.vote_id_to_info.insert(_vote_id, &x);
                     return Ok(());
